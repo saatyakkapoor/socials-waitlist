@@ -1,15 +1,20 @@
+// api/llm-api.js
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = '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'; // hardcoded for now
+  const { message } = req.body;
+
+  if (!message) {
+    return res.status(400).json({ error: 'No message provided' });
+  }
 
   try {
-    const openRouterRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const openrouterRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`, // Make sure this is set in Vercel!
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://socials-waitlist.vercel.app',
         'X-Title': 'Socials Waitlist'
@@ -19,16 +24,21 @@ export default async function handler(req, res) {
         messages: [
           {
             role: 'user',
-            content: req.body.message || 'Default message from proxy.'
+            content: message
           }
         ]
       })
     });
 
-    const data = await openRouterRes.json();
-    res.status(openRouterRes.status).json(data);
+    const data = await openrouterRes.json();
+
+    if (!openrouterRes.ok) {
+      return res.status(openrouterRes.status).json({ error: data });
+    }
+
+    res.status(200).json(data);
   } catch (err) {
-    console.error('OpenRouter call failed:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('LLM API Error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
