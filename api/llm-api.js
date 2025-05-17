@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 
 const OPENROUTER_API_KEY = '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';
 const SITE_URL = 'https://socials-waitlist.vercel.app';
